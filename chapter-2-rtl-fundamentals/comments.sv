@@ -37,24 +37,29 @@
 * 1.1: 7 Jul 2016: Changed mode to match revised design spec
 */
 
-module rtl adder subtractor
+module rtl_adder_subtractor
+#(
+    // Parameter List
+    parameter N = 32;
+)
 (
+    // Port Declaration
     input   logic        clk,       // clock input
     input   logic        rstN,      // active low reset input
     input   logic        mode,      // add/subtract control input
-    output  logic        select;    // [MY_ADDITION] "y" select input
+    output  logic        select,   // [MY_ADDITION] "y" select input
     input   logic [31:0] a, b,      // 32-bit inputs
     output  logic [31:0] sum,       // 32-bit output
     output  logic        y
 );
     // registered adder/subtractor with async reset
-    always_ff 0 (posedge clk or negedge rstN) // async reset
-    if (IrstN) sum <=0; // active low reset
+    always_ff (posedge clk or negedge rstN) // async reset
+    if (rstN) sum <=0; // active low reset
     else case (mode)
     // "(*" and "*)" are used for attributes, ignored by simulatior 
     // and read by synteshis tools
         1'b0: sum <= a + b; // unsigned integer add, no overflow
-        l'bl: sum <= a - b; // unsigned integer subtract, no
+        1'b1: sum <= a - b; // unsigned integer subtract, no
     endcase                 // underflow
 
     // To use pragmas comment needs to start with "synthesis" or "pragma" (lowercase)
