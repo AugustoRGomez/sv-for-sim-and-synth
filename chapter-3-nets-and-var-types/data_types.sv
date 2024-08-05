@@ -276,9 +276,57 @@ always_ff @(posedge elk)
             for (int i=0; i<=31; i=i+8) begin
                 @(posedge shift_clk) byte_out <= data[i+:8];
             end
-        end           
+        end
+   
+/*
+    Vector with subfields
+*/
+    logic [31:0] a; // 32-bit simple vector
+    logic [3:0][7:0] b; // 32-bit vector. divided into 4 8-bit subfields
+
+    // loop through vector variable
+    always @(posedge shift_clk)
+        if (shift_enable) 
+        begin
+            for (int i=0; i<=3; i++) 
+            begin
+                @(posedge shift_clk) byte_out <= b [i];
+            end
+        end
+
+/* 
+    Variable assignment rules
+
+    Note: Variables can only assigned by a single source (either procedural or continuos)
+*/
+    logic [15:0] q; // 16-bit 4-state unassigned variable
+
+    // this multiple assigments are treated as a signle driver
+    always_ff @( posedge clk ) 
+    begin: procedural_loop 
+        if (!rstN) q <= '0; // procedural assignment
+        else       q <= d;  // another procedural assignment
+    end
+
+/* 
+    Uninitialized variables
+
+    for 4-state variable -> 'x
+    for 2-state variable -> '0
+
+    Uninitialized 2-state variables can hide design problems. An uninitialized 2-
+    state variable has the value of 0, which can appear to be a legitimate reset
+    value. This can potentially hide problems with reset logic in a design.
+*/
+    logic [15:0] q; // uninitialized 4-state variable
+    always_ff @(posedge clk)
+        if (!rstN) q <= '0; // active-low synchronous reset
+        else q <= d; // clocked assignment to q
 
 /*
-    Variable bit and part selects are synthesizable. However, the preceding code snippets illustrating variable bit and 
-    part selects do not meet other RTL coding restrictions required by some synthesis compilers.
+    in-line variable initialization
+
+    Only executed one time, at the begining of simulation
+    Some FPGA can be programmed that some registers powers-up in a known state
 */
+    int i = 5;
