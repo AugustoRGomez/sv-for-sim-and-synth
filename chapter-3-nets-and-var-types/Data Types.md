@@ -1,3 +1,7 @@
+---
+
+---
+---
 ## Types and data types
 
 * Type: signal is net or variable
@@ -19,12 +23,12 @@
 * Required to be on the left-side of a procedural assignment.
 * The always_comb procedure will execute the assignment statement sum = a + b, every time a or b changes value. It'll be implemented as combinational logic in silicon (no storage elements needed)
 * The always_ff procedure will execute the if-else decision statement on every positive edge of clock. It'll be implemented in silicon as a flip-flop, which is a hardware storage device.
-* Temporary storage required by simulation does not necessarily mean that actual silicon will require storage.
+* Temporary storage required by simulation does not necessarily mean that actual silicon will require storage. ­
 
 ```systemverilog
 always_comb 
 begin
-    sum = a + b;
+    sum = a + b; 
 end
 
 always_ff @(posedge clk)
@@ -133,7 +137,7 @@ The MSB and LSB can be any number, and the LSB can be smaller or larger than the
 
 The byte, shortint, int, longint and integer data types have a predefined vector size. The predefined ranges are little endian, with the LSB numbered as bit 0.
 
-```systemverilog
+```systemverilog  
 logic [31:0] v9; // 32-bit vector, little endian
 logic [1:32] v10; // 32-bit vector, big endian
 ```
@@ -181,9 +185,11 @@ always @(posedge shift_clk)
 ## Variable part select
 
 The starting point of a part select can also be variable. The part select can either increment or decrement from the variable starting point. The total number of bits selected is a fixed range. The form of a variable part select is:
-* [ starting_point_variable +: part_select_size ]
-* [ starting_point_variable -: part_select_size ]
 
+```systemverilog
+[ starting_point_variable +: part_select_size ]
+[ starting_point_variable -: part_select_size ]
+```
 The +: token indicates to increment from the starting point bit number. The -: token indicates to decrement from the starting point bit number. The following example uses a variable part select to iterate through the bytes of a 32-bit vector.
 
 ```systemverilog
@@ -262,5 +268,29 @@ The strength level of a driver is represented in steps from 0 to 7. Each level i
 
 ## Synthesizable net types
 
-Nets are declared by specifying both a type and a data type. Data type must be logic.
+Nets are declared by specifying both a type and a data type. The data type must be the keyword `logic` which can be specified explicitly or implicitly inferred.
+
+Each SystemVerilog net type has specific semantic rules that affect how multiple
+drivers are resolved. While all net types represent silicon behavior, **not all net types
+can be represented in standard ASIC and FPGA technologies***. 
+
+### Synthetizable net types
+| Type    | Representation                                                                                                |
+| ------- | ------------------------------------------------------------------------------------------------------------- |
+| wire    | Interconnectiong net, resolves multiple drivers using CMOS behavior.                                          |
+| tri     | Same as wire, used to emphasize nets that are expected to have tri-state values.                              |
+| supply0 | Interconnecting net of constant logic 0 value, at supply strength level. Represents a ground rail (GND, VSS). |
+| supply1 | Interconnecting net of constant logic 1 value, at supply strength level. Represents a ground rail (VCC, VDD). |
+### Non-synthetizable net types
+| Type   | Representation                                                                                                                          |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| uwire  | An interconnecting net that does not permit or resolve multiple drivers.                                                                |
+| pull0  | An interconnecting net that has the behavior of having a pull-down resistor tied to the net.                                            |
+| pull1  | An interconnecting net that has the behavior of having a pull-up resistor tied to the net.                                              |
+| wand   | An interconnecting net that resolves multiple drivers by ANDing the driven values.                                                      |
+| triand | A synonym for wand, and identical in all ways; can be used to emphasize nets that are expected to have tri-state values.                |
+| wor    | An interconnecting net that resolves multiple drivers by ORing the driven values.                                                       |
+| trior  | A synonym for wor, and identical in all ways; can be used to emphasize nets that are expected to have tri-state values.                 |
+| trireg | An interconnecting net with capacitance; if all drivers are at high-impedance, the capacitance reflects the last resolved driven value. |
+> NOTE: Some RTL synthesis compilers might support one or more of these net types. A best-practice coding style is to not use these types in order to ensure the RTL model is compatible with any synthesis compiler. If one of these types is used, design engineers should check that all tools used in the project support that type.
 
